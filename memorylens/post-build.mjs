@@ -48,7 +48,60 @@ if (fs.existsSync(publicIcons)) {
   console.log('⚠️  Dossier public/icons absent — les icônes devront être ajoutées manuellement')
 }
 
-// 4. Copier et injecter les variables d'environnement dans stripe-checkout.html
+// 4. Injecter la config dans le service worker
+const swFile = path.join(dist, 'background', 'service-worker.js')
+if (fs.existsSync(swFile)) {
+  let swContent = fs.readFileSync(swFile, 'utf8')
+  
+  // Créer l'objet config à injecter
+  const config = {
+    BACKEND_URL: process.env.VITE_BACKEND_URL || 'http://localhost:3001',
+    FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY || '',
+    FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID || 'memorylens-d33e4',
+    FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'memorylens-d33e4.firebaseapp.com',
+    FIREBASE_DATABASE_URL: process.env.VITE_FIREBASE_DATABASE_URL || 'https://memorylens-d33e4.firebaseio.com',
+    FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET || 'memorylens-d33e4.appspot.com',
+    FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+    FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID || '',
+  }
+  
+  // Crée un fichier config.js séparé au lieu d'injecter dans le service worker
+  const configFile = path.join(dist, 'background', 'config.js')
+  const configContent = `export const MEMORYLENS_CONFIG = ${JSON.stringify(config)};`
+  fs.writeFileSync(configFile, configContent, 'utf8')
+  
+  // Injecte l'import au début du service worker (après les autres imports)
+  // On le met après la première ligne pour ne pas casser les imports ES6
+  const lines = swContent.split('\n')
+  const importIndex = lines.findIndex(line => line.startsWith('import '))
+  if (importIndex >= 0) {
+    // Insère après le dernier import
+    let lastImportIndex = importIndex
+    for (let i = importIndex + 1; i < lines.length; i++) {
+      if (lines[i].startsWith('import ')) {
+        lastImportIndex = i
+      } else if (lines[i].trim() === '' || lines[i].startsWith('//')) {
+        continue
+      } else {
+        break
+      }
+    }
+    lines.splice(lastImportIndex + 1, 0, 'import { MEMORYLENS_CONFIG } from \'./config.js\';')
+    lines.splice(lastImportIndex + 2, 0, '(globalThis).__MEMORYLENS_CONFIG = MEMORYLENS_CONFIG;')
+    swContent = lines.join('\n')
+  } else {
+    // Fallback: injecter au début
+    const configScript = `import { MEMORYLENS_CONFIG } from './config.js';\n(globalThis).__MEMORYLENS_CONFIG = MEMORYLENS_CONFIG;\n`
+    swContent = configScript + swContent
+  }
+  
+  fs.writeFileSync(swFile, swContent, 'utf8')
+  console.log('✅ Configuration injectée dans service-worker.js et config.js créé')
+} else {
+  console.warn('⚠️  service-worker.js absent à:', swFile)
+}
+
+// 5. Copier et injecter les variables d'environnement dans stripe-checkout.html
 const stripeCheckoutSrc = 'public/stripe-checkout.html'
 const stripeCheckoutDest = path.join(dist, 'stripe-checkout.html')
 if (fs.existsSync(stripeCheckoutSrc)) {
@@ -69,7 +122,7 @@ if (fs.existsSync(stripeCheckoutSrc)) {
   console.log('⚠️  public/stripe-checkout.html absent')
 }
 
-// 5. Copier les autres fichiers HTML du dossier public
+// 6. Copier les autres fichiers HTML du dossier public
 const htmlFiles = ['login.html', 'stripe-success.html', 'privacy_policy.html']
 for (const file of htmlFiles) {
   const src = path.join('public', file)

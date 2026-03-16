@@ -321,8 +321,7 @@ async function getProjectId(): Promise<string | null> {
 }
 
 async function triggerSync(userId: string) {
-  const { CONFIG } = await import('@/config')
-  const backendUrl = CONFIG.BACKEND_URL
+  const backendUrl = (globalThis as any).__MEMORYLENS_CONFIG?.BACKEND_URL || 'http://localhost:3001'
 
   console.log('[MemoryLens] 🔄 Synchronisation cloud en cours...')
 
@@ -487,8 +486,13 @@ async function startLoginFlow() {
   console.log('[service-worker] Démarrage du flux de connexion Google')
   
   try {
+    // En Service Worker, la config est injectée dans globalThis.__MEMORYLENS_CONFIG
+    const backendUrl = (globalThis as any).__MEMORYLENS_CONFIG?.BACKEND_URL || 'http://localhost:3001'
+    
+    console.log('[service-worker] Backend URL:', backendUrl)
+    
     // Ouvre la page login.html depuis le backend
-    const tab = await chrome.tabs.create({ url: 'http://localhost:3001/login' })
+    const tab = await chrome.tabs.create({ url: `${backendUrl}/login` })
     console.log('[service-worker] Onglet login créé:', tab.id)
 
     // Stocke l'état de la connexion en cours
@@ -510,6 +514,9 @@ async function startLoginFlow() {
 // Fonction pour vérifier la connexion (appelée par l'alarme)
 async function checkLoginStatus() {
   try {
+    // En Service Worker, la config est injectée dans globalThis.__MEMORYLENS_CONFIG
+    const backendUrl = (globalThis as any).__MEMORYLENS_CONFIG?.BACKEND_URL || 'http://localhost:3001'
+    
     const data = await chrome.storage.local.get(['loginInProgress', 'loginStartTime'])
     
     if (!data.loginInProgress) {
@@ -530,13 +537,14 @@ async function checkLoginStatus() {
 
     // Récupère les données utilisateur depuis le backend
     console.log('[service-worker] Vérification de la connexion... (', Math.round(elapsed / 1000), 's)')
-    const res = await fetch('http://localhost:3001/auth/current-user')
+    const res = await fetch(`${backendUrl}/auth/current-user`)
     
     console.log('[service-worker] Réponse /auth/current-user:', res.status)
     
     if (res.ok) {
       const userData = await res.json()
       console.log('[service-worker] Utilisateur connecté:', userData)
+      console.log('[service-worker] RefreshToken reçu du backend:', userData.refreshToken ? '✅ OUI' : '❌ NON (vide ou undefined)')
       
       // Stocke les données dans chrome.storage.local (partagé entre tous les contextes)
       await chrome.storage.local.set({
@@ -675,7 +683,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         console.log('[service-worker] STRIPE_VERIFY_SESSION userId:', userId)
 
-        const backendUrl = 'http://localhost:3001'
+        const backendUrl = (globalThis as any).__MEMORYLENS_CONFIG?.BACKEND_URL || 'http://localhost:3001'
         const res = await fetch(`${backendUrl}/stripe/verify-session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

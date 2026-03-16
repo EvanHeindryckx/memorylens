@@ -1,27 +1,73 @@
 /**
  * Configuration centralisée pour MemoryLens
  * Utilise les variables d'env du .env.local ou de Vite
+ * Pour le Service Worker, la config est injectée au build (window.__MEMORYLENS_CONFIG)
  */
 
 export const CONFIG = {
   // ── Backend API ────────────────────────────────────────────────────────────
-  BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001',
+  get BACKEND_URL() {
+    // Service Worker : utilise window.__MEMORYLENS_CONFIG
+    if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.BACKEND_URL) {
+      return (window as any).__MEMORYLENS_CONFIG.BACKEND_URL
+    }
+    // Contexte normal Vite
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) {
+      return import.meta.env.VITE_BACKEND_URL
+    }
+    return 'http://localhost:3001'
+  },
 
   // ── Firebase Client Config ─────────────────────────────────────────────────
   FIREBASE: {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'memorylens-d33e4.firebaseapp.com',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'memorylens-d33e4',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'memorylens-d33e4.appspot.com',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-    databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://memorylens-d33e4.firebaseio.com',
+    get apiKey() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_API_KEY) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_API_KEY
+      }
+      return import.meta.env?.VITE_FIREBASE_API_KEY || ''
+    },
+    get authDomain() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_AUTH_DOMAIN) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_AUTH_DOMAIN
+      }
+      return import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || 'memorylens-d33e4.firebaseapp.com'
+    },
+    get projectId() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_PROJECT_ID) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_PROJECT_ID
+      }
+      return import.meta.env?.VITE_FIREBASE_PROJECT_ID || 'memorylens-d33e4'
+    },
+    get storageBucket() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_STORAGE_BUCKET) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_STORAGE_BUCKET
+      }
+      return import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET || 'memorylens-d33e4.appspot.com'
+    },
+    get messagingSenderId() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_MESSAGING_SENDER_ID) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_MESSAGING_SENDER_ID
+      }
+      return import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID || ''
+    },
+    get appId() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_APP_ID) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_APP_ID
+      }
+      return import.meta.env?.VITE_FIREBASE_APP_ID || ''
+    },
+    get databaseURL() {
+      if (typeof window !== 'undefined' && (window as any).__MEMORYLENS_CONFIG?.FIREBASE_DATABASE_URL) {
+        return (window as any).__MEMORYLENS_CONFIG.FIREBASE_DATABASE_URL
+      }
+      return import.meta.env?.VITE_FIREBASE_DATABASE_URL || 'https://memorylens-d33e4.firebaseio.com'
+    },
   },
 
   // ── Environnement ──────────────────────────────────────────────────────────
-  ENV: import.meta.env.MODE || 'development',
-  IS_DEV: import.meta.env.DEV,
-  IS_PROD: import.meta.env.PROD,
+  ENV: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.MODE : 'development',
+  IS_DEV: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.DEV : true,
+  IS_PROD: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.PROD : false,
 
   // ── Limites Free vs Pro ────────────────────────────────────────────────────
   LIMITS: {

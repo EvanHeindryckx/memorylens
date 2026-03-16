@@ -37,23 +37,25 @@ function makePNG(size, drawFn) {
   ihdr.writeUInt32BE(size, 0)
   ihdr.writeUInt32BE(size, 4)
   ihdr[8] = 8   // bit depth
-  ihdr[9] = 2   // color type RGB
+  ihdr[9] = 6   // color type RGBA
   ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0
 
-  // Pixels RGB
-  const pixels = new Uint8Array(size * size * 3)
+  // Pixels RGBA
+  const pixels = new Uint8Array(size * size * 4)
+  pixels.fill(0)
   drawFn(pixels, size)
 
   // Raw image data avec filtre 0 par ligne
-  const raw = Buffer.alloc(size * (1 + size * 3))
+  const raw = Buffer.alloc(size * (1 + size * 4))
   for (let y = 0; y < size; y++) {
-    raw[y * (1 + size * 3)] = 0 // filter none
+    raw[y * (1 + size * 4)] = 0 // filter none
     for (let x = 0; x < size; x++) {
-      const src = (y * size + x) * 3
-      const dst = y * (1 + size * 3) + 1 + x * 3
+      const src = (y * size + x) * 4
+      const dst = y * (1 + size * 4) + 1 + x * 4
       raw[dst]     = pixels[src]
       raw[dst + 1] = pixels[src + 1]
       raw[dst + 2] = pixels[src + 2]
+      raw[dst + 3] = pixels[src + 3]
     }
   }
 
@@ -67,67 +69,113 @@ function makePNG(size, drawFn) {
   ])
 }
 
-// ── Dessin de l'icône MemoryLens ─────────────────────────────────────────────
+// ── Dessin de l'icône MemoryLens (Cerveau + Loupe) ─────────────────────────
 
 function drawIcon(pixels, size) {
   const cx = size / 2
   const cy = size / 2
-  const r  = size * 0.42
 
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 3
-      const dx = x - cx
-      const dy = y - cy
-      const dist = Math.sqrt(dx * dx + dy * dy)
+  // Couleurs (RGBA)
+  const colors = {
+    bg: [15, 15, 17, 255],        // #0f0f11 - fond noir
+    purple: [188, 68, 237, 255],  // #bc44ed - violet principal
+    purple_light: [220, 124, 255, 255], // #dc7cff - violet clair
+    white: [255, 255, 255, 255],  // blanc
+    gray: [100, 100, 120, 255],   // gris
+  }
 
-      if (dist <= r) {
-        // Cercle violet #7c3aed
-        pixels[idx]     = 0x7c
-        pixels[idx + 1] = 0x3a
-        pixels[idx + 2] = 0xed
-      } else {
-        // Fond sombre #0f0f11
-        pixels[idx]     = 0x0f
-        pixels[idx + 1] = 0x0f
-        pixels[idx + 2] = 0x11
-      }
+  // Fond
+  for (let i = 0; i < size * size * 4; i += 4) {
+    pixels[i] = colors.bg[0]
+    pixels[i + 1] = colors.bg[1]
+    pixels[i + 2] = colors.bg[2]
+    pixels[i + 3] = colors.bg[3]
+  }
+
+  function setPixel(x, y, color) {
+    x = Math.round(x)
+    y = Math.round(y)
+    if (x >= 0 && x < size && y >= 0 && y < size) {
+      const idx = (y * size + x) * 4
+      pixels[idx] = color[0]
+      pixels[idx + 1] = color[1]
+      pixels[idx + 2] = color[2]
+      pixels[idx + 3] = color[3]
     }
   }
 
-  // Dessine un "M" simplifié au centre (barres verticales + diagonales)
-  const s = size
-  const col = { r: 255, g: 255, b: 255 }
-  const lw = Math.max(1, Math.round(s * 0.08))  // épaisseur du trait
-
-  function setPixel(px, py) {
-    px = Math.round(px); py = Math.round(py)
-    for (let dy = -lw; dy <= lw; dy++) {
-      for (let dx = -lw; dx <= lw; dx++) {
-        const nx = px + dx, ny = py + dy
-        if (nx >= 0 && nx < s && ny >= 0 && ny < s) {
-          const idx = (ny * s + nx) * 3
-          pixels[idx]     = col.r
-          pixels[idx + 1] = col.g
-          pixels[idx + 2] = col.b
+  function drawCircle(cx, cy, r, color, filled = true) {
+    const steps = Math.max(8, Math.round(2 * Math.PI * r))
+    for (let i = 0; i < steps; i++) {
+      const angle = (2 * Math.PI * i) / steps
+      const x = cx + r * Math.cos(angle)
+      const y = cy + r * Math.sin(angle)
+      setPixel(x, y, color)
+    }
+    
+    if (filled) {
+      for (let y = Math.ceil(cy - r); y <= Math.floor(cy + r); y++) {
+        for (let x = Math.ceil(cx - r); x <= Math.floor(cx + r); x++) {
+          const dx = x - cx
+          const dy = y - cy
+          if (dx * dx + dy * dy <= r * r) {
+            setPixel(x, y, color)
+          }
         }
       }
     }
   }
 
-  // Coordonnées du M (proportionnelles à la taille)
-  const x1 = s * 0.28, x2 = s * 0.39, x3 = s * 0.50, x4 = s * 0.61, x5 = s * 0.72
-  const yTop = s * 0.28, yBot = s * 0.72, yMid = s * 0.50
+  // ── Cerveau (violet) ──────────────────────────────────────────────────────
+  const brain_r = size * 0.32
+  const brain_x = cx - size * 0.12
+  const brain_y = cy - size * 0.15
 
-  const steps = Math.ceil(s * 0.5)
-  // Barre gauche verticale
-  for (let i = 0; i <= steps; i++) setPixel(x1, yTop + (yBot - yTop) * i / steps)
-  // Diagonale gauche vers milieu
-  for (let i = 0; i <= steps; i++) setPixel(x1 + (x3 - x1) * i / steps, yTop + (yMid - yTop) * i / steps)
-  // Diagonale droite vers milieu
-  for (let i = 0; i <= steps; i++) setPixel(x3 + (x5 - x3) * i / steps, yMid + (yTop - yMid) * i / steps)
-  // Barre droite verticale
-  for (let i = 0; i <= steps; i++) setPixel(x5, yTop + (yBot - yTop) * i / steps)
+  // Hémisphère gauche et droit
+  drawCircle(brain_x - size * 0.08, brain_y - size * 0.05, brain_r * 0.95, colors.purple, true)
+  drawCircle(brain_x + size * 0.08, brain_y - size * 0.05, brain_r * 0.95, colors.purple, true)
+
+  // Lobes frontaux
+  drawCircle(brain_x - size * 0.08, brain_y - size * 0.25, brain_r * 0.5, colors.purple_light, true)
+  drawCircle(brain_x + size * 0.08, brain_y - size * 0.25, brain_r * 0.5, colors.purple_light, true)
+
+  // ── Loupe (contour blanc) ───────────────────────────────────────────────
+  const magnifier_r = size * 0.22
+  const magnifier_x = cx + size * 0.18
+  const magnifier_y = cy + size * 0.15
+
+  // Cercle de la loupe (contour blanc)
+  for (let y = Math.ceil(magnifier_y - magnifier_r); y <= Math.floor(magnifier_y + magnifier_r); y++) {
+    for (let x = Math.ceil(magnifier_x - magnifier_r); x <= Math.floor(magnifier_x + magnifier_r); x++) {
+      const dx = x - magnifier_x
+      const dy = y - magnifier_y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      
+      // Contour blanc (épaisseur ~3px)
+      if (dist > magnifier_r - 3 && dist < magnifier_r) {
+        setPixel(x, y, colors.white)
+      }
+    }
+  }
+
+  // Manche de la loupe (blanc)
+  const handle_angle = Math.PI * 0.75
+  const handle_start_x = magnifier_x + magnifier_r * Math.cos(handle_angle)
+  const handle_start_y = magnifier_y + magnifier_r * Math.sin(handle_angle)
+  const handle_end_x = magnifier_x + magnifier_r * 1.4 * Math.cos(handle_angle)
+  const handle_end_y = magnifier_y + magnifier_r * 1.4 * Math.sin(handle_angle)
+
+  const handle_steps = Math.ceil(magnifier_r)
+  for (let i = 0; i <= handle_steps; i++) {
+    const t = i / handle_steps
+    const x = handle_start_x + (handle_end_x - handle_start_x) * t
+    const y = handle_start_y + (handle_end_y - handle_start_y) * t
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        setPixel(x + dx, y + dy, colors.white)
+      }
+    }
+  }
 }
 
 // ── Génération des 4 tailles ──────────────────────────────────────────────────
@@ -140,3 +188,5 @@ for (const size of [16, 32, 48, 128]) {
   fs.writeFileSync(path.join(outDir, `icon${size}.png`), png)
   console.log(`✅ icon${size}.png généré`)
 }
+
+console.log('✨ Tous les icônes MemoryLens ont été générés avec succès!')

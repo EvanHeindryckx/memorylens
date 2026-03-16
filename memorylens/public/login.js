@@ -1,5 +1,5 @@
-// Backend URL
-const BACKEND_URL = 'http://localhost:3001'
+// Backend URL — déterminer dynamiquement
+const BACKEND_URL = window.location.origin
 
 const btnGoogle = document.getElementById('btnGoogle')
 const errorDiv = document.getElementById('error')

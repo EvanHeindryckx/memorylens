@@ -50,7 +50,7 @@
     "scopes": ["openid", "email", "profile", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"]
   },
   "externally_connectable": {
-    "matches": ["http://localhost:3001/*"]
+    "matches": ["http://localhost:3001/*", "https://memorylens-backend.vercel.app/*"]
   },
   "host_permissions": [
     "<all_urls>",
@@ -58,6 +58,7 @@
     "https://identitytoolkit.googleapis.com/*",
     "https://securetoken.googleapis.com/*",
     "http://localhost:3001/*",
+    "https://memorylens-backend.vercel.app/*",
     "https://r.stripe.com/*",
     "https://stripe.com/*",
     "https://js.stripe.com/*",
@@ -86,6 +87,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: chrome-extension: https://lh3.googleusercontent.com https://www.gstatic.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' http://localhost:3001 https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com https://www.googleapis.com https://accounts.google.com https://stripe.com https://r.stripe.com https://js.stripe.com https://errors.stripe.com"
+    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: chrome-extension: https://lh3.googleusercontent.com https://www.gstatic.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' http://localhost:3001 https://memorylens-backend.vercel.app https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com https://www.googleapis.com https://accounts.google.com https://stripe.com https://r.stripe.com https://js.stripe.com https://errors.stripe.com"
   }
 }
