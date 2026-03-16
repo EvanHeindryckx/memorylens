@@ -51,12 +51,8 @@ app.use('/auth', authRouter)
 
 // ── Servir les fichiers statiques de login ─────────────────────────────────────
 app.get('/login', (req, res) => {
-  try {
-    const loginHtmlPath = path.join(__dirname, '../public/login.html')
-    res.sendFile(loginHtmlPath)
-  } catch (error) {
-    // Fallback: servir une page HTML en ligne
-    res.send(`<!DOCTYPE html>
+  // Servir une page HTML en ligne (pas de lecture de fichier)
+  res.send(`<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -178,7 +174,6 @@ app.get('/login', (req, res) => {
   </script>
 </body>
 </html>`)
-  }
 })
 
 app.get('/login.js', (req, res) => {
