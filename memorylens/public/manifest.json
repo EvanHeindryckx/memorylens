@@ -1,0 +1,91 @@
+{
+  "manifest_version": 3,
+  "name": "MemoryLens — AI Browser Memory",
+  "short_name": "MemoryLens",
+  "version": "1.7.0",
+  "description": "Find any page you've ever visited using natural language. AI-powered browser memory with cloud sync.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    },
+    "default_title": "MemoryLens"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content-script.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "options_ui": {
+    "page": "options/index.html",
+    "open_in_tab": true
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "activeTab",
+    "scripting",
+    "alarms",
+    "contextMenus",
+    "offscreen",
+    "notifications",
+    "identity"
+  ],
+  "oauth2": {
+    "client_id": "89539399140-ltnrvhrjqqmkg0db0vjh541sognimt27.apps.googleusercontent.com",
+    "scopes": ["openid", "email", "profile", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"]
+  },
+  "externally_connectable": {
+    "matches": ["http://localhost:3001/*"]
+  },
+  "host_permissions": [
+    "<all_urls>",
+    "https://firestore.googleapis.com/*",
+    "https://identitytoolkit.googleapis.com/*",
+    "https://securetoken.googleapis.com/*",
+    "http://localhost:3001/*",
+    "https://r.stripe.com/*",
+    "https://stripe.com/*",
+    "https://js.stripe.com/*",
+    "https://errors.stripe.com/*"
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "Command+Shift+H"
+      },
+      "description": "Open MemoryLens"
+    },
+    "memorize-current": {
+      "suggested_key": {
+        "default": "Alt+Shift+M",
+        "mac": "Alt+Shift+M"
+      },
+      "description": "Mémoriser la page actuelle"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["offscreen/index.html", "privacy_policy.html", "stripe-success.html", "stripe-checkout.html", "login.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: chrome-extension: https://lh3.googleusercontent.com https://www.gstatic.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' http://localhost:3001 https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://oauth2.googleapis.com https://www.googleapis.com https://accounts.google.com https://stripe.com https://r.stripe.com https://js.stripe.com https://errors.stripe.com"
+  }
+}

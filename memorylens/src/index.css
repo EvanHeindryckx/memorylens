@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { @apply border-surface-700; }
+
+  body {
+    @apply bg-surface-900 text-white font-sans antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { @apply bg-surface-800; }
+  ::-webkit-scrollbar-thumb { @apply bg-surface-600 rounded-full; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium
+           px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer;
+  }
+  .btn-ghost {
+    @apply text-zinc-400 hover:text-white hover:bg-surface-700
+           text-sm px-3 py-1.5 rounded-lg transition-colors duration-150 cursor-pointer;
+  }
+  .card {
+    @apply bg-surface-800 border border-surface-700 rounded-xl
+           hover:border-surface-600 transition-colors duration-150;
+  }
+  .input {
+    @apply bg-surface-700 border border-surface-600 text-white placeholder-zinc-500
+           rounded-lg px-3 py-2 text-sm w-full outline-none
+           focus:border-brand-500 focus:ring-1 focus:ring-brand-500
+           transition-colors duration-150;
+  }
+  .badge {
+    @apply text-xs px-2 py-0.5 rounded-full font-medium;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Thème clair — valeurs directes pour éviter la dépendance circulaire PostCSS ── */
+body.theme-light {
+  background-color: #ffffff;
+  color: #18181b;
+}
+body.theme-light .card {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+}
+body.theme-light .card:hover {
+  border-color: #d1d5db;
+}
+body.theme-light .input {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #18181b;
+}
+body.theme-light .input::placeholder {
+  color: #9ca3af;
+}
+body.theme-light .btn-ghost {
+  color: #71717a;
+}
+body.theme-light .btn-ghost:hover {
+  color: #18181b;
+  background-color: #f4f4f5;
+}
+body.theme-light .text-white  { color: #18181b !important; }
+body.theme-light .text-zinc-400 { color: #71717a !important; }
+body.theme-light .text-zinc-500 { color: #71717a !important; }
+body.theme-light .text-zinc-600 { color: #52525b !important; }
+body.theme-light .bg-surface-700 { background-color: #f3f4f6 !important; }
+body.theme-light .bg-surface-800 { background-color: #f9fafb !important; }
+body.theme-light .bg-surface-900 { background-color: #ffffff !important; }
+body.theme-light .border-surface-700 { border-color: #e5e7eb !important; }
+body.theme-light .border-surface-600 { border-color: #d1d5db !important; }
+body.theme-light ::-webkit-scrollbar-track { background-color: #f3f4f6; }
+body.theme-light ::-webkit-scrollbar-thumb { background-color: #d1d5db; }
