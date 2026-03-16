@@ -486,6 +486,13 @@ async function startLoginFlow() {
   console.log('[service-worker] Démarrage du flux de connexion Google')
   
   try {
+    // Vérifier si un onglet de login est déjà ouvert
+    const { loginTabId } = await chrome.storage.local.get('loginTabId')
+    if (loginTabId) {
+      console.log('[service-worker] Onglet login déjà ouvert:', loginTabId)
+      return
+    }
+
     // En Service Worker, la config est injectée dans globalThis.__MEMORYLENS_CONFIG
     const backendUrl = (globalThis as any).__MEMORYLENS_CONFIG?.BACKEND_URL || 'http://localhost:3001'
     
