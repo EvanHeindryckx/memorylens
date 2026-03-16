@@ -323,6 +323,8 @@ async function getProjectId(): Promise<string | null> {
 async function triggerSync(userId: string) {
   const backendUrl = (globalThis as any).__MEMORYLENS_CONFIG?.BACKEND_URL || 'http://localhost:3001'
 
+
+  // d//
   console.log('[MemoryLens] 🔄 Synchronisation cloud en cours...')
 
   try {
