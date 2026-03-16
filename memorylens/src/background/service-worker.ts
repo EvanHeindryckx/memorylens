@@ -489,8 +489,16 @@ async function startLoginFlow() {
     // Vérifier si un onglet de login est déjà ouvert
     const { loginTabId } = await chrome.storage.local.get('loginTabId')
     if (loginTabId) {
-      console.log('[service-worker] Onglet login déjà ouvert:', loginTabId)
-      return
+      try {
+        // Vérifier que l'onglet existe réellement
+        await chrome.tabs.get(loginTabId as number)
+        console.log('[service-worker] Onglet login déjà ouvert:', loginTabId)
+        return
+      } catch {
+        // L'onglet n'existe plus, on peut continuer
+        console.log('[service-worker] Onglet login fermé, création d\'un nouveau')
+        await chrome.storage.local.remove('loginTabId')
+      }
     }
 
     // En Service Worker, la config est injectée dans globalThis.__MEMORYLENS_CONFIG
