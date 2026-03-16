@@ -51,11 +51,168 @@ app.use('/auth', authRouter)
 
 // ── Servir les fichiers statiques de login ─────────────────────────────────────
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/login.html'))
+  try {
+    const loginHtmlPath = path.join(__dirname, '../public/login.html')
+    res.sendFile(loginHtmlPath)
+  } catch (error) {
+    // Fallback: servir une page HTML en ligne
+    res.send(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://identitytoolkit.googleapis.com;" />
+  <title>MemoryLens — Connexion</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f11;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      text-align: center;
+      padding: 48px 40px;
+      background: #1a1a1f;
+      border-radius: 20px;
+      border: 1px solid #2a2a35;
+      max-width: 420px;
+      width: 100%;
+    }
+    .logo { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    p { font-size: 14px; color: #9ca3af; margin-bottom: 24px; }
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-google {
+      background: white;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+    .btn-google:hover { background: #f3f4f6; }
+    .btn-google:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+    .error.show { display: block; }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .text-sm { font-size: 12px; color: #6b7280; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🧠</div>
+    <h1>MemoryLens</h1>
+    <p>Connectez-vous pour synchroniser votre compte</p>
+
+    <div id="error" class="error"></div>
+
+    <button id="btnGoogle" class="btn-google">
+      <span style="font-size: 18px;">🔵</span>
+      Continuer avec Google
+    </button>
+
+    <p class="text-sm">Vos données restent locales · Aucune publicité</p>
+  </div>
+
+  <script>
+    const BACKEND_URL = window.location.origin
+    const btnGoogle = document.getElementById('btnGoogle')
+    const errorDiv = document.getElementById('error')
+
+    btnGoogle.onclick = async () => {
+      btnGoogle.disabled = true
+      btnGoogle.innerHTML = '<span class="spinner"></span> Connexion…'
+      errorDiv.classList.remove('show')
+
+      try {
+        const res = await fetch(\`\${BACKEND_URL}/auth/google-login\`, {
+          method: 'POST',
+        })
+
+        if (!res.ok) {
+          throw new Error('Erreur de connexion')
+        }
+
+        const data = await res.json()
+        window.location.href = data.authUrl
+      } catch (error) {
+        btnGoogle.disabled = false
+        btnGoogle.innerHTML = '<span style="font-size: 18px; margin-right: 8px;">🔵</span> Continuer avec Google'
+        errorDiv.textContent = error instanceof Error ? error.message : 'Erreur de connexion'
+        errorDiv.classList.add('show')
+      }
+    }
+  </script>
+</body>
+</html>`)
+  }
 })
 
 app.get('/login.js', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/login.js'))
+  // Retourner le script JavaScript directement
+  res.type('application/javascript').send(`
+const BACKEND_URL = window.location.origin
+
+const btnGoogle = document.getElementById('btnGoogle')
+const errorDiv = document.getElementById('error')
+
+btnGoogle.onclick = async () => {
+  btnGoogle.disabled = true
+  btnGoogle.innerHTML = '<span class="spinner"></span> Connexion…'
+  errorDiv.classList.remove('show')
+
+  try {
+    const res = await fetch(\`\${BACKEND_URL}/auth/google-login\`, {
+      method: 'POST',
+    })
+
+    if (!res.ok) {
+      throw new Error('Erreur de connexion')
+    }
+
+    const data = await res.json()
+    window.location.href = data.authUrl
+  } catch (error) {
+    btnGoogle.disabled = false
+    btnGoogle.innerHTML = '<span style="font-size: 18px; margin-right: 8px;">🔵</span> Continuer avec Google'
+    errorDiv.textContent = error instanceof Error ? error.message : 'Erreur de connexion'
+    errorDiv.classList.add('show')
+  }
+}
+`)
 })
 
 app.get('/health', (_req, res) => {
