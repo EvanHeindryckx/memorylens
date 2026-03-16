@@ -4,10 +4,12 @@ dotenv.config()
 import express from 'express'
 import cors from 'cors'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
 import { stripeRouter } from './routes/stripe'
 import { authRouter } from './routes/auth'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT || 3001
 
@@ -49,11 +51,11 @@ app.use('/auth', authRouter)
 
 // ── Servir les fichiers statiques de login ─────────────────────────────────────
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public/login.html'))
+  res.sendFile(path.join(__dirname, '../public/login.html'))
 })
 
 app.get('/login.js', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public/login.js'))
+  res.sendFile(path.join(__dirname, '../public/login.js'))
 })
 
 app.get('/health', (_req, res) => {
