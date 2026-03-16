@@ -182,6 +182,7 @@ router.get('/current-user', async (req: Request, res: Response) => {
     // ── Convertir le token Google OAuth en token Firebase ────────────────────
     // Pour que Firestore accepte le token, on doit le convertir en token Firebase Auth
     let firebaseToken = session.firebaseToken
+    let firebaseRefreshToken = session.firebaseRefreshToken || ''
     
     if (!firebaseToken) {
       try {
@@ -206,10 +207,15 @@ router.get('/current-user', async (req: Request, res: Response) => {
         
         if (fbRes.ok && fbData.idToken) {
           firebaseToken = fbData.idToken
+          firebaseRefreshToken = fbData.refreshToken || ''
+          
+          // Sauvegarde pour la prochaine requête
           session.firebaseToken = fbData.idToken
           session.firebaseRefreshToken = fbData.refreshToken || ''
           session.firebaseExpiresAt = Date.now() + parseInt(fbData.expiresIn || '3600', 10) * 1000
+          
           console.log('[auth] ✅ Token Firebase généré avec succès')
+          console.log('[auth] Refresh token présent:', !!firebaseRefreshToken)
         } else {
           console.error('[auth] ❌ Erreur conversion Firebase:', fbData.error)
           // Fallback : utiliser le token Google (ne marchera pas mais au moins on essaie)
@@ -225,6 +231,7 @@ router.get('/current-user', async (req: Request, res: Response) => {
     console.log('[auth] Retour du token:', { 
       hasToken: !!firebaseToken, 
       tokenLength: firebaseToken?.length || 0,
+      hasRefreshToken: !!firebaseRefreshToken,
       uid: session.uid 
     })
 
@@ -234,7 +241,7 @@ router.get('/current-user', async (req: Request, res: Response) => {
       displayName: session.displayName,
       photoURL: session.photoURL,
       token: firebaseToken || session.idToken,
-      refreshToken: session.firebaseRefreshToken || session.refreshToken || '',
+      refreshToken: firebaseRefreshToken,
     })
   } catch (err: any) {
     return res.status(500).json({ error: err.message })
